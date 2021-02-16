@@ -1,0 +1,28 @@
+{
+  "name": "botzilla",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ginkodan/botzilla.git"
+  },
+  "keywords": [
+    "telegram"
+  ],
+  "author": "red",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ginkodan/botzilla/issues"
+  },
+  "homepage": "https://github.com/Ginkodan/botzilla#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "nodemon": "^2.0.7",
+    "telegraf": "^4.0.0"
+  }
+}
