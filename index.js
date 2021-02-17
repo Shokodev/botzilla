@@ -1,4 +1,5 @@
 const { Telegraf, Markup } = require("telegraf");
+require('dotenv').config()
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.start((ctx) => ctx.reply("Welcome"));
@@ -8,6 +9,7 @@ bot.on('callback_query', ctx =>{
     const plexLib = ctx.update.callback_query.data;
 })
 bot.hears("hi", (ctx) => ctx.reply("Hey there"));
+
 
 bot.command("special", (ctx) => {
   return ctx.reply(
@@ -25,12 +27,16 @@ bot.command("plex", (ctx) => {
     "Plex",
 
     Markup.keyboard([
-      Markup.button.callback("Movies", plexLib),
-      Markup.button.callback("Series", plexLib),
+      Markup.button.callback("Movies", "bla"),
+      Markup.button.callback("Series"),
     ]).resize()
   );
 });
 
+
+function mytest() {
+  return "test";
+}
 function getPlexLib() {
   axios
     .get(`http://192.168.0.123:32400/library/sections`, {
