@@ -1,6 +1,6 @@
 const app = require("express")();
 const axios = require("axios");
-const { Telegraf, Markup } = require("telegraf");
+const { Telegraf } = require("telegraf");
 require("dotenv").config();
 
 //web
@@ -25,19 +25,31 @@ bot.hears("hi", (ctx) => {
 
 bot.command("plex", (ctx) => {
   getPlexLib().then((result) => {
-    ctx.reply(result);
+    ctx.reply(
+      "Recently ned added titles are:\n- " +
+        result[0] +
+        "\n- " +
+        result[1] +
+        "\n- " +
+        result[2] +
+        "\n"
+    );
   });
 });
 
 async function getPlexLib() {
   url = "http://192.168.0.123:32400/library/recentlyAdded";
-  console.log()
+  console.log();
   let res = await axios.get(url, {
     headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
   });
-  console.log(res.data.MediaContainer.Metadata[1].title)
-
-  return res.data.MediaContainer.Metadata[1].title;
+  let plexRecent = [];
+  let i;
+  for (i = 0; i < 3; i++) {
+    plexRecent.push(res.data.MediaContainer.Metadata[i].title);
+  }
+  console.log(res.data.MediaContainer.Metadata[0]);
+  return plexRecent;
 }
 
 bot.launch();
