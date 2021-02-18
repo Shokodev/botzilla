@@ -1,4 +1,5 @@
 const app = require("express")();
+const axios = require("axios");
 const { Telegraf, Markup } = require("telegraf");
 require("dotenv").config();
 
@@ -22,32 +23,21 @@ bot.hears("hi", (ctx) => {
   ctx.reply("Hey there " + ctx.from.first_name);
 });
 
-bot.on("callback_query", (ctx) => {
-  const plexLib = ctx.update.callback_query.data;
-});
-
 bot.command("plex", (ctx) => {
-  return ctx.reply(
-    "Plex",
-
-    Markup.keyboard([
-      Markup.button.callback("Movies", "bla"),
-      Markup.button.callback("Series"),
-    ]).resize()
-  );
+  getPlexLib().then((result) => {
+    ctx.reply(result);
+  });
 });
 
-function getPlexLib() {
-  axios
-    .get(`http://192.168.0.123:32400/library/sections`, {
-      headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
-    })
-    .then((res) => {
-      const data = res.data;
-      console.log(data);
-      return ctx.reply(data.MediaContainer.size);
-    })
-    .catch((err) => console.log(err));
+async function getPlexLib() {
+  url = "http://192.168.0.123:32400/library/recentlyAdded";
+  console.log()
+  let res = await axios.get(url, {
+    headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
+  });
+  console.log(res.data.MediaContainer.Metadata[1].title)
+
+  return res.data.MediaContainer.Metadata[1].title;
 }
 
 bot.launch();
