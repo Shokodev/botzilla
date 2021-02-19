@@ -23,33 +23,28 @@ bot.hears("hi", (ctx) => {
   ctx.reply("Hey there " + ctx.from.first_name);
 });
 
+//TODO
 bot.command("plex", (ctx) => {
   getPlexLib().then((result) => {
+    const amount = 3;
+    cutResult = result.slice(0,amount)
     ctx.reply(
-      "Recently ned added titles are:\n- " +
-        result[0] +
-        "\n- " +
-        result[1] +
-        "\n- " +
-        result[2] +
-        "\n"
+      cutResult
     );
   });
 });
 
 async function getPlexLib() {
   url = "http://192.168.0.123:32400/library/recentlyAdded";
-  console.log();
   let res = await axios.get(url, {
     headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
   });
-  let plexRecent = [];
-  let i;
-  for (i = 0; i < 3; i++) {
-    plexRecent.push(res.data.MediaContainer.Metadata[i].title);
-  }
-  console.log(res.data.MediaContainer.Metadata[0]);
-  return plexRecent;
+
+  const plexRec = res.data.MediaContainer.Metadata.map((movie) => ({
+    title: movie.title,
+    rating: movie.rating,
+  }));
+  return plexRec;
 }
 
 bot.launch();
