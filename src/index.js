@@ -1,8 +1,10 @@
 const app = require("express")();
-const axios = require("axios");
-const { Telegraf } = require("telegraf");
+const {getPlexLib} = require("./plex/interface")
+const { Telegraf} = require("telegraf");
 require("dotenv").config();
 
+
+const plexTitlesAmount = 3;
 //web
 app.get("/", (req, res) => res.json({ message: "Telegram bot" }));
 const port = process.env.PORT || 8080;
@@ -23,29 +25,21 @@ bot.hears("hi", (ctx) => {
   ctx.reply("Hey there " + ctx.from.first_name);
 });
 
+
+
+
 //TODO
 bot.command("plex", (ctx) => {
-  getPlexLib().then((result) => {
-    const amount = 3;
-    cutResult = result.slice(0,amount)
-    ctx.reply(
-      cutResult
-    );
+  getPlexLib(plexTitlesAmount).then((result) => {
+    result.forEach(element => {
+      element.rating === undefined ? element.rating = "none" : element.rating = element.rating.toString().replace(".",",")
+      ctx.replyWithMarkdownV2(
+        "*Title:* " + element.title + " *Rating:* " + element.rating
+      );
+    })
   });
 });
 
-async function getPlexLib() {
-  url = "http://192.168.0.123:32400/library/recentlyAdded";
-  let res = await axios.get(url, {
-    headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
-  });
-
-  const plexRec = res.data.MediaContainer.Metadata.map((movie) => ({
-    title: movie.title,
-    rating: movie.rating,
-  }));
-  return plexRec;
-}
 
 bot.launch();
 
