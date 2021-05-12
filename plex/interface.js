@@ -1,10 +1,12 @@
 const axios = require("axios");
 
+const plex = "http://192.168.0.123:32400/library/recentlyAdded";
 
 async function getPlexLib(amount) {
-    url = "http://192.168.0.123:32400/library/recentlyAdded";
+    url = plex;
     let res = await axios.get(url, {
-      headers: { "X-Plex-Token": "AQcGWezcruGz65h6NSNw" },
+      headers: { 
+        "X-Plex-Token": process.env.X-PLEX-TOKEN},
     });
   
     const plexRec = res.data.MediaContainer.Metadata.map((movie) => ({
