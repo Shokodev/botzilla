@@ -1,8 +1,7 @@
 const app = require("express")();
-const {getPlexLib} = require("./plex/interface")
-const { Telegraf} = require("telegraf");
 require("dotenv").config();
-
+const { Telegraf} = require("telegraf");
+const {getPlexLib} = require("./plex/interface")
 
 
 const plexTitlesAmount = 3;
