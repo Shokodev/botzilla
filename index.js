@@ -1,7 +1,9 @@
 const app = require("express")();
 require("dotenv").config();
 const { Telegraf} = require("telegraf");
-const {getPlexLib} = require("./plex/interface")
+const {getPlexLib} = require("./src/plex/interface")
+const addLink = require("./src/jdownloader/jdownlaoder")
+let jdLink = addLink.addLink;
 
 
 const plexTitlesAmount = 3;
@@ -39,6 +41,11 @@ bot.command("plex", (ctx) => {
     })
   });
 });
+
+bot.command("download", (ctx) => {
+  
+  jdLink(ctx.message)
+})
 
 
 bot.launch();
