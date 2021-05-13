@@ -62,12 +62,14 @@ bot.command("download", (ctx) => {
 });
 
 bot.action("series", (ctx) => {
+  ctx.deleteMessage(ctx.inlineMessageId)
   ctx.reply("Downlaoding series " + "\u{1F44D}");
   jdLink(url, seriesFolder);
   url = null;
 });
 
 bot.action("movie", (ctx) => {
+  ctx.deleteMessage(ctx.inlineMessageId)
   ctx.reply("Downlaoding movie " + "\u{1F44D}");
   jdLink(url, moviesFolder);
   url = null;

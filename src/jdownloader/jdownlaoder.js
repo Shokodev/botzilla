@@ -1,12 +1,23 @@
 const axios = require("axios");
 
 const url = process.env.JDOWNLOADER;
-const myLinkQuery = {params: ['{"maxResults":20,"startAt":0}']}
-let linkcollectorIds = null;
+const myLinkQuery = { params: ['{"maxResults":20,"startAt":0}'] };
+const myDeleteQuery = {
+  params: [
+    {
+      linkIds: [],
+      packageIds: [],
+      action: "DELETE_FINISHED",
+      mode: "REMOVE_LINKS_ONLY",
+      selectionType: "ALL",
+    },
+  ],
+};
+
+let linkcollectorIds = [];
 
 //TODO Add password functionality for archive extraction
 async function addLink(link, folder, password) {
-    console.log(link + folder + password )
   await axios.get(url + "/linkcollector/addLinks", {
     params: {
       links: link,
@@ -16,6 +27,9 @@ async function addLink(link, folder, password) {
       destinationFolder: folder,
     },
   });
+
+  await sleep(1000);
+  getLinkIds();
 }
 
 const getLinkIds = async function () {
@@ -24,20 +38,29 @@ const getLinkIds = async function () {
       myLinkQuery,
     },
   });
-  console.log(res.data.data);
-  linkcollectorIds = res.data
+
+  res.data.data.forEach((element) => {
+    linkcollectorIds.push(element.uuid);
+  });
+  startDownload();
 };
 
 // TODO finish this function
 const startDownload = async function () {
-  let res = await axios.get(url + "/linkcollector/startDownloads", {
+  await axios.get(url + "/linkcollector/startDownloads", {
     params: {
-      params: [[1620897177331]],
+      params: [linkcollectorIds],
     },
   });
-  console.log(res.data);
+  startDl();
 };
 
-//getLinkIds();
-//startDownload();
+function startDl() {
+  axios.post(url + "/downloadcontroller/start");
+}
+
+const sleep = (milliseconds) => {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+};
+
 module.exports = { addLink: addLink };
