@@ -9,7 +9,7 @@ async function getPlexLib(amount) {
     });
   
     const plexRec = res.data.MediaContainer.Metadata.map((movie) => ({
-      title: movie.title,
+      title: movie.type === "season" ? movie.parentTitle : movie.title, // movie.title,
       rating: movie.rating,
     }));
     return plexRec.slice(0, amount);
