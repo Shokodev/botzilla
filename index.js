@@ -19,7 +19,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.start((ctx) => ctx.reply("Botzilla is booting.."));
 
 bot.help((ctx) =>
-  ctx.reply("Following commands are available for now: \n /plex\n /help")
+  ctx.reply("Following commands are available for now: \n /plex\n /help \n /download")
 );
 
 bot.hears("hi", (ctx) => {
@@ -47,7 +47,7 @@ let url = null;
 
 bot.command("download", (ctx) => {
   if (ctx.message.text === "/download") {
-    ctx.reply("You need to provide following data: /download *url* password ");
+    ctx.replyWithMarkdownV2("You need to provide following data: /download *url*");
   } else {
     ctx.reply(
       "Choose media type",
