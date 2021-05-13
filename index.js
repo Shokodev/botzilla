@@ -1,10 +1,9 @@
 const app = require("express")();
 require("dotenv").config();
-const { Telegraf} = require("telegraf");
-const {getPlexLib} = require("./src/plex/interface")
-const addLink = require("./src/jdownloader/jdownlaoder")
+const { Telegraf, Markup } = require("telegraf");
+const { getPlexLib } = require("./src/plex/interface");
+const addLink = require("./src/jdownloader/jdownlaoder");
 let jdLink = addLink.addLink;
-
 
 const plexTitlesAmount = 3;
 //web
@@ -27,26 +26,52 @@ bot.hears("hi", (ctx) => {
   ctx.reply("Hey there " + ctx.from.first_name);
 });
 
-
-
-
-//TODO
+//plex commands
 bot.command("plex", (ctx) => {
   getPlexLib(plexTitlesAmount).then((result) => {
-    result.forEach(element => {
-      element.rating === undefined ? element.rating = "none" : element.rating = element.rating.toString().replace(".",",")
+    result.forEach((element) => {
+      element.rating === undefined
+        ? (element.rating = "none")
+        : (element.rating = element.rating.toString().replace(".", ","));
       ctx.replyWithMarkdownV2(
         "*Title:* " + element.title + " *Rating:* " + element.rating
       );
-    })
+    });
   });
 });
 
-bot.command("download", (ctx) => {
-  
-  jdLink(ctx.message)
-})
+// jdownloader commands
+const seriesFolder = process.env.SERIESFOLDER;
+const moviesFolder = process.env.MOVIESFOLDER;
+let url = null;
 
+bot.command("download", (ctx) => {
+  if (ctx.message.text === "/download") {
+    ctx.reply("You need to provide following data: /download *url* password ");
+  } else {
+    ctx.reply(
+      "Choose media type",
+      Markup.inlineKeyboard([
+        [{ text: "series", callback_data: "series" }],
+        [{ text: "movie", callback_data: "movie" }],
+      ])
+    );
+
+    url = ctx.message;
+  }
+});
+
+bot.action("series", (ctx) => {
+  ctx.reply("Downlaoding series " + "\u{1F44D}");
+  jdLink(url, seriesFolder);
+  url = null;
+});
+
+bot.action("movie", (ctx) => {
+  ctx.reply("Downlaoding movie " + "\u{1F44D}");
+  jdLink(url, moviesFolder);
+  url = null;
+});
 
 bot.launch();
 

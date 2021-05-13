@@ -3,14 +3,15 @@ const axios = require('axios')
 const url = process.env.JDOWNLOADER;
 //const link = "https://rapidrar.com/lq68byqqzg40"
 
-async function addLink(link) {
+async function addLink(link, folder) {
     let res = await axios.get(url + "/linkcollector/addLinks",{params: {
-            link: link,
+            links: link,
             packageName: "",
-            archivePassword: "",
-            linkPassword:""
+            extractPassword: "",
+            downloadPassword:"",
+            destinationFolder: folder
+
         }})
-        console.log(res.data)
 }
 
 module.exports = {addLink: addLink}
