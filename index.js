@@ -1,4 +1,5 @@
 const app = require("express")();
+const logger = require("./src/logger")
 require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
 const { getPlexLib } = require("./src/plex/interface");
@@ -10,7 +11,7 @@ const plexTitlesAmount = 3;
 app.get("/", (req, res) => res.json({ message: "Telegram bot" }));
 const port = process.env.PORT || 8080;
 app.listen(port, () =>
-  console.log(`app listening on http://localhost:${port}`)
+  logger.info(`app listening on http://localhost:${port}`)
 );
 
 //telegram bot
@@ -63,7 +64,7 @@ bot.command("download", (ctx) => {
 
 bot.action("series", async (ctx) => {
   ctx.deleteMessage(ctx.inlineMessageId)
-  const title = await addLink(url, moviesFolder)
+  const title = await addLink(url, seriesFolder)
   const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
   await sleep(2000)
   updateStatus(title, message)
@@ -82,6 +83,7 @@ bot.action("movie", async (ctx) => {
 });
 
 async function updateStatus(title, message) {
+  logger.info(`${message.chat.username} is ${message.text}`)
   let finished = false;
   let loaded = 0;
 while(!finished) {
@@ -89,7 +91,6 @@ while(!finished) {
     
     let status = await getDlStatus(title.uuid)
     finished = status[0].finished ? true : false
-    console.log(status)
     let bytesLoaded = status[0].bytesLoaded
     let bytesTotal = status[0].bytesTotal
     let newLoaded = Math.round(((100  / bytesTotal) * bytesLoaded))
