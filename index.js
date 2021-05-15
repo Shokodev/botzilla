@@ -2,8 +2,8 @@ const app = require("express")();
 require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
 const { getPlexLib } = require("./src/plex/interface");
-const {addLink, getDlStatus, sleep} = require("./src/jdownloader/jdownlaoder");
-//let jdLink = addLink.addLink;
+const {addLink, getDlStatus, sleep, cleanUp} = require("./src/jdownloader/jdownlaoder");
+const { load } = require("dotenv");
 
 const plexTitlesAmount = 3;
 //web
@@ -61,34 +61,55 @@ bot.command("download", (ctx) => {
   }
 });
 
-bot.action("series", (ctx) => {
+bot.action("series", async (ctx) => {
   ctx.deleteMessage(ctx.inlineMessageId)
-  ctx.reply("Downlaoding series " + "\u{1F39E}");
-  addLink(url, seriesFolder);
+  const title = await addLink(url, moviesFolder)
+  const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
+  await sleep(2000)
+  updateStatus(title, message)
   url = null;
 });
 
 bot.action("movie", async (ctx) => {
 
   ctx.deleteMessage(ctx.inlineMessageId)
-
   const title = await addLink(url, moviesFolder)
   const message = await ctx.reply(`Downlaoding movie ${title.name.split(".").join(" ")}` + " \u{1F39E}")
   await sleep(2000)
+
+  updateStatus(title, message)
+  url = null;
+});
+
+async function updateStatus(title, message) {
+  let finished = false;
   let loaded = 0;
-  while(loaded != 100) {
+while(!finished) {
     await sleep(1000)
     
     let status = await getDlStatus(title.uuid)
+    finished = status[0].finished ? true : false
     console.log(status)
     let bytesLoaded = status[0].bytesLoaded
     let bytesTotal = status[0].bytesTotal
-    loaded += ((bytesLoaded / bytesTotal) * 100)
-    console.log(loaded)
+    let newLoaded = Math.round(((100  / bytesTotal) * bytesLoaded))
+    if (loaded != newLoaded)  {
+      loaded = newLoaded;
+      bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Downloading... ${loaded}%`)
+    }
   }
+    cleanUp(title.uuid)
+  
+
   bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Finished download ${title.name.split(".").join(" ")}`)
-  url = null;
-});
+}
+
+bot.hears('delete', (ctx) => {
+  cleanUp(123)
+}) 
+
+
+
 
 bot.launch();
 
