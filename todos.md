@@ -1,5 +1,5 @@
-[] = User auth for some commands..
-[] = try catch 
-[] = check availability before downloading 
-[] = error messages for duplicate items
-[] = multiple links for example when downlaoding a season 
+- [ ] User auth for some commands..
+- [ ] try catch 
+- [ ] check availability before downloading 
+- [ ] error messages for duplicate items
+- [ ] multiple links for example when downlaoding a season 
