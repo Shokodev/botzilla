@@ -65,6 +65,10 @@ bot.command("download", (ctx) => {
 bot.action("series", async (ctx) => {
   ctx.deleteMessage(ctx.inlineMessageId)
   const title = await addLink(url, seriesFolder)
+  if(title==="offline") {
+    ctx.reply("This link seems to be offline or incorrect")
+    return
+  }
   const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
   await sleep(2000)
   updateStatus(title, message)
@@ -75,6 +79,10 @@ bot.action("movie", async (ctx) => {
 
   ctx.deleteMessage(ctx.inlineMessageId)
   const title = await addLink(url, moviesFolder)
+  if(title==="offline") {
+    ctx.reply("This link seems to be offline or incorrect")
+    return
+  }
   const message = await ctx.reply(`Downlaoding movie ${title.name.split(".").join(" ")}` + " \u{1F39E}")
   await sleep(2000)
 
@@ -105,9 +113,6 @@ while(!finished) {
   bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Finished download ${title.name.split(".").join(" ")}`)
 }
 
-bot.hears('delete', (ctx) => {
-  cleanUp(123)
-}) 
 
 
 

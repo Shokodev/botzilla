@@ -1,4 +1,5 @@
 const axios = require("axios");
+const logger = require("../logger");
 
 const url = process.env.JDOWNLOADER;
 const myLinkQuery = { params: ['{"maxResults":20,"startAt":0}'] };
@@ -23,7 +24,12 @@ const addLink = async function (link, folder, password) {
   });
 
   await sleep(1000);
-  return await getLinkIds();
+  let isLinkDead = await checkAvailability();
+  console.log(isLinkDead)
+  if (!isLinkDead) {
+    logger.info("link is dead")
+    return "offline";
+  } else return await getLinkIds();
 };
 
 const getLinkIds = async function () {
@@ -70,13 +76,54 @@ async function getDlStatus(uuid) {
           bytesTotal: true,
           eta: true,
           finished: true,
-          status: ""
+          status: "",
         },
       ],
     },
   });
 
   return res.data.data.filter((title) => title.uuid === uuid);
+}
+
+async function checkAvailability() {
+  let res = await axios.get(url + "/linkgrabberv2/queryLinks", {
+    params: {
+      myCrawledLinkQuery: {
+        availability: true,
+        bytesTotal: true,
+        comment: true,
+        enabled: true,
+        host: true,
+        jobUUIDs: [],
+        maxResults: 10,
+        packageUUIDs: [],
+        password: true,
+        priority: true,
+        startAt: 0,
+        status: true,
+        url: true,
+        variantID: true,
+        variantIcon: true,
+        variantName: true,
+        variants: true,
+      },
+    },
+  });
+  console.log(res.data)
+  return res.data.data[0].availability === "ONLINE" ? true : false;
+  // EXAMPLE DATA
+  /*   data: [
+    {
+      host: "rapidrar.com",
+      name: "0j25wcxowyz8",
+      availability: "OFFLINE",
+      packageUUID: 1621172091883,
+      uuid: 1621172091884,
+      url: "https://rapidrar.com/0j25wcxowyz8",
+      enabled: true,
+    },
+  ],
+ */
 }
 
 const sleep = (milliseconds) => {
