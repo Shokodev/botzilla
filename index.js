@@ -4,7 +4,6 @@ require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
 const { getPlexLib } = require("./src/plex/interface");
 const { addLink, getDlStatus, sleep, cleanUp } = require("./src/jdownloader/jdownlaoder");
-
 const plexTitlesAmount = 3;
 
 //web
@@ -45,6 +44,7 @@ bot.command("plex", (ctx) => {
 const seriesFolder = process.env.SERIESFOLDER;
 const moviesFolder = process.env.MOVIESFOLDER;
 let url = null;
+let password = null;
 
 bot.command("download", (ctx) => {
     if (auth(ctx)) {
@@ -58,8 +58,20 @@ bot.command("download", (ctx) => {
                     [{ text: "movie", callback_data: "movie" }],
                 ])
             );
-
             url = ctx.message;
+        }
+    } else {
+        ctx.reply('You are not allowd to download content')
+    }
+});
+
+bot.command("pw", (ctx) => {
+    if (auth(ctx)) {
+        if (ctx.message.text === "/pw") {
+            ctx.replyWithMarkdownV2("You need to provide following data: /pw *password* ");
+        } else {
+            password = ctx.message.text.slice(4, ctx.message.text.length);
+            ctx.reply("password for next download set");
         }
     } else {
         ctx.reply('You are not allowd to download content')
@@ -68,30 +80,39 @@ bot.command("download", (ctx) => {
 
 bot.action("series", async(ctx) => {
     ctx.deleteMessage(ctx.inlineMessageId)
-    const title = await addLink(url, seriesFolder)
-    if (title === "offline") {
-        ctx.reply("This link seems to be offline or incorrect")
-        return
+    try {
+        const title = await addLink(url, seriesFolder, password)
+        if (title === "offline") {
+            ctx.reply("This link seems to be offline or incorrect")
+            return
+        }
+        const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
+        await sleep(2000)
+        updateStatus(title, message)
+    } catch (err) {
+        logger.error(err);
     }
-    const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
-    await sleep(2000)
-    updateStatus(title, message)
     url = null;
+    password = null;
 });
 
 bot.action("movie", async(ctx) => {
-
     ctx.deleteMessage(ctx.inlineMessageId)
-    const title = await addLink(url, moviesFolder)
-    if (title === "offline") {
-        ctx.reply("This link seems to be offline or incorrect")
-        return
-    }
-    const message = await ctx.reply(`Downlaoding movie ${title.name.split(".").join(" ")}` + " \u{1F39E}")
-    await sleep(2000)
+    try {
+        const title = await addLink(url, moviesFolder, password)
+        if (title === "offline") {
+            ctx.reply("This link seems to be offline or incorrect")
+            return
+        }
+        const message = await ctx.reply(`Downlaoding movie ${title.name.split(".").join(" ")}` + " \u{1F39E}")
+        await sleep(2000)
+        updateStatus(title, message)
 
-    updateStatus(title, message)
+    } catch (err) {
+        logger.error(err);
+    }
     url = null;
+    password = null;
 });
 
 async function updateStatus(title, message) {

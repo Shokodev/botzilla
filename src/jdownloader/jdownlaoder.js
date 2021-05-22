@@ -12,17 +12,26 @@ const myDeleteQuery = {
 let linkcollectorIds = [];
 
 //TODO Add password functionality for archive extraction
-const addLink = async function(link, folder, password) {
-    await axios.get(url + "/linkcollector/addLinks", {
+const addLink = async function(links, folder, password) {
+    await axios.get(url + "/linkgrabberv2/addLinks", {
         params: {
-            links: link,
-            packageName: "",
-            extractPassword: "",
-            downloadPassword: "",
-            destinationFolder: folder,
-        },
+            myAddLinksQuery: [{
+                assignJobID: null,
+                autoExtract: null,
+                autostart: null,
+                dataURLs: [],
+                deepDecrypt: null,
+                destinationFolder: folder,
+                downloadPassword: "",
+                extractPassword: password,
+                links: links,
+                overwritePackagizerRules: null,
+                packageName: "",
+                priority: "HIGH",
+                sourceUrl: "",
+            }]
+        }
     });
-
     await sleep(1000);
     let isLinkDead = await checkAvailability();
     if (!isLinkDead) {
@@ -83,7 +92,7 @@ async function getDlStatus(uuid) {
 }
 
 async function checkAvailability() {
-    let res = await axios.get(url + "/linkgrabberv2/queryLinks", {
+    let res = await axios.get(url + "/linkgrabberv2/", {
         params: {
             myCrawledLinkQuery: {
                 availability: true,
