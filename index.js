@@ -47,7 +47,7 @@ let url = null;
 let password = null;
 
 bot.command("download", (ctx) => {
-    if (auth(ctx)) {
+    auth(ctx, () => {
         if (ctx.message.text === "/download") {
             ctx.replyWithMarkdownV2("You need to provide following data: /download *url*");
         } else {
@@ -60,22 +60,18 @@ bot.command("download", (ctx) => {
             );
             url = ctx.message;
         }
-    } else {
-        ctx.reply('You are not allowd to download content')
-    }
+    });
 });
 
 bot.command("pw", (ctx) => {
-    if (auth(ctx)) {
+    auth(ctx, () => {
         if (ctx.message.text === "/pw") {
             ctx.replyWithMarkdownV2("You need to provide following data: /pw *password* ");
         } else {
             password = ctx.message.text.slice(4, ctx.message.text.length);
             ctx.reply("password for next download set");
         }
-    } else {
-        ctx.reply('You are not allowd to download content')
-    }
+    });
 });
 
 bot.action("series", async(ctx) => {
@@ -138,13 +134,12 @@ async function updateStatus(title, message) {
     bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Finished download ${title.name.split(".").join(" ")}`)
 }
 
-function auth(ctx) {
-    if (ctx.update.message.from.username) {
-        return Array.from(process.env.USERS.split(",")).includes(ctx.update.message.from.username);
+const auth = (ctx, command) => {
+    if (Array.from(process.env.USERIDS.split(",")).includes(ctx.update.message.from.id.toString())) {
+        command();
     } else {
-        ctx.reply("username not found.. ")
+        ctx.reply("You are not authorized!")
     }
-
 }
 
 bot.launch();
