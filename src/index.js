@@ -1,17 +1,33 @@
-const app = require("express")();
-const logger = require("./src/logger")
+const express = require("express")
+const app = express();
+const logger = require("./logger")
 require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
-const { getPlexLib } = require("./src/plex/interface");
-const { addLink, getDlStatus, sleep, cleanUp } = require("./src/jdownloader/jdownlaoder");
+const { getPlexLib } = require("./plex/interface");
+const Jdownlaoder = require("./jdownloader/jdownlaoder");
 const plexTitlesAmount = 3;
+const settings = {
+    serie_folder: process.env.SERIESFOLDER,
+    movie_folder:process.env.MOVIESFOLDER,
+    user_ids: process.env.USERIDS.split(","),
+}
 
-//web
-app.get("/", (req, res) => res.json({ message: "Telegram bot" }));
 const port = process.env.PORT || 8080;
 app.listen(port, () =>
     logger.info(`app listening on http://localhost:${port}`)
 );
+
+app.use(express.static(__dirname + '/public/'));
+app.get(/.*!/, (req, res) => res.sendFile(__dirname + './public/index.html'));
+
+app.get('/settings', (req, res) => {
+    res.send(settings);
+});
+
+app.post('/settings', (req, res) => {
+    settings = req.body.settings
+    res.sendStatus(200);
+})
 
 //telegram bot
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -23,6 +39,7 @@ bot.help((ctx) =>
 );
 
 bot.hears("hi", (ctx) => {
+    console.log(ctx);
     ctx.reply("Hey there " + ctx.from.first_name);
 });
 
@@ -41,8 +58,6 @@ bot.command("plex", (ctx) => {
 });
 
 // jdownloader commands
-const seriesFolder = process.env.SERIESFOLDER;
-const moviesFolder = process.env.MOVIESFOLDER;
 let url = null;
 let password = null;
 
@@ -77,14 +92,15 @@ bot.command("pw", (ctx) => {
 bot.action("series", async(ctx) => {
     ctx.deleteMessage(ctx.inlineMessageId)
     try {
-        const title = await addLink(url, seriesFolder, password)
+        let jd = new Jdownlaoder(ctx);
+        const title = await jd.addLink(url, settings.serie_folder, password)
         if (title === "offline") {
             ctx.reply("This link seems to be offline or incorrect")
             return
         }
         const message = await ctx.reply(`Downlaoding series ${title.name.split(".").join(" ")}` + " \u{1F39E}")
-        await sleep(2000)
-        updateStatus(title, message)
+        await jd.sleep(2000)
+        updateStatus(title, message, jd)
     } catch (err) {
         logger.error(err);
     }
@@ -95,14 +111,15 @@ bot.action("series", async(ctx) => {
 bot.action("movie", async(ctx) => {
     ctx.deleteMessage(ctx.inlineMessageId)
     try {
-        const title = await addLink(url, moviesFolder, password)
+        let jd = new Jdownlaoder(ctx);
+        const title = await jd.addLink(url, settings.movie_folder, password)
         if (title === "offline") {
             ctx.reply("This link seems to be offline or incorrect")
             return
         }
         const message = await ctx.reply(`Downlaoding movie ${title.name.split(".").join(" ")}` + " \u{1F39E}")
-        await sleep(2000)
-        updateStatus(title, message)
+        await jd.sleep(2000)
+        updateStatus(title, message, jd)
 
     } catch (err) {
         logger.error(err);
@@ -111,14 +128,12 @@ bot.action("movie", async(ctx) => {
     password = null;
 });
 
-async function updateStatus(title, message) {
+async function updateStatus(title, message, jd) {
     logger.info(`${message.chat.username} is ${message.text}`)
     let finished = false;
     let loaded = 0;
     while (!finished) {
-        await sleep(1000)
-
-        let status = await getDlStatus(title.uuid)
+        let status = await jd.getDlStatus(title.uuid)
         finished = status[0].finished ? true : false
         let bytesLoaded = status[0].bytesLoaded
         let bytesTotal = status[0].bytesTotal
@@ -127,6 +142,7 @@ async function updateStatus(title, message) {
             loaded = newLoaded;
             bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Downloading... ${loaded}%`)
         }
+        await jd.sleep(5000)
     }
     cleanUp(title.uuid)
 
@@ -135,7 +151,7 @@ async function updateStatus(title, message) {
 }
 
 const auth = (ctx, command) => {
-    if (Array.from(process.env.USERIDS.split(",")).includes(ctx.update.message.from.id.toString())) {
+    if (Array.from(settings.user_ids).includes(ctx.update.message.from.id.toString())) {
         command();
     } else {
         ctx.reply("You are not authorized!")
@@ -147,3 +163,4 @@ bot.launch();
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
