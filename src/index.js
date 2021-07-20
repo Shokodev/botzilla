@@ -1,12 +1,12 @@
-const express = require("express")
+const express = require("express");
 const app = express();
-const logger = require("./logger")
+const log = require("./logger");
 require("dotenv").config();
 const { Telegraf, Markup } = require("telegraf");
 const { getPlexLib } = require("./plex/interface");
 const Jdownlaoder = require("./jdownloader/jdownlaoder");
 const plexTitlesAmount = 3;
-const settings = {
+let settings = {
     serie_folder: process.env.SERIESFOLDER,
     movie_folder:process.env.MOVIESFOLDER,
     user_ids: process.env.USERIDS.split(","),
@@ -14,19 +14,26 @@ const settings = {
 
 const port = process.env.PORT || 8080;
 app.listen(port, () =>
-    logger.info(`app listening on http://localhost:${port}`)
+    log.info(`app listening on http://localhost:${port}`)
 );
-
+app.use(express.json());
 app.use(express.static(__dirname + '/public/'));
 app.get(/.*!/, (req, res) => res.sendFile(__dirname + './public/index.html'));
 
 app.get('/settings', (req, res) => {
+    log.info("GET settings");
     res.send(settings);
 });
 
 app.post('/settings', (req, res) => {
-    settings = req.body.settings
-    res.sendStatus(200);
+    log.info("Save settings");
+    try{
+        settings = req.body;
+        res.sendStatus(200);
+    } catch (err){
+        log.error(`Save settings failed: ${err}`);
+        res.sendStatus(500);
+    }
 })
 
 //telegram bot
@@ -102,7 +109,7 @@ bot.action("series", async(ctx) => {
         await jd.sleep(2000)
         updateStatus(title, message, jd)
     } catch (err) {
-        logger.error(err);
+        log.error(err);
     }
     url = null;
     password = null;
@@ -122,14 +129,14 @@ bot.action("movie", async(ctx) => {
         updateStatus(title, message, jd)
 
     } catch (err) {
-        logger.error(err);
+        log.error(err);
     }
     url = null;
     password = null;
 });
 
 async function updateStatus(title, message, jd) {
-    logger.info(`${message.chat.username} is ${message.text}`)
+    log.info(`${message.chat.username} is ${message.text}`)
     let finished = false;
     let loaded = 0;
     while (!finished) {
@@ -144,7 +151,7 @@ async function updateStatus(title, message, jd) {
         }
         await jd.sleep(5000)
     }
-    cleanUp(title.uuid)
+    jd.cleanUp(title.uuid)
 
 
     bot.telegram.editMessageText(message.chat.id, message.message_id, "", `Finished download ${title.name.split(".").join(" ")}`)
