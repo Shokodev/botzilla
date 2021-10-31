@@ -14,10 +14,10 @@
 
 ## How to get started
 
-* Create a new Telegram account if u don't already have one. **
+* Create a new Telegram account if u don't already have one.
 * Just create a bot in Telegram with the help of **[botfather](https://core.telegram.org/bots#6-botfather)**.
 * Start a chat with your bot.
-* Rename the **.env-sample** file to **.env** and the the `botToken` and `jDownlaoder` url.
+* Rename the **.env-sample** file to **.env** and the the `botToken`Shokodev/botzilla and `jDownlaoder` url.
 * **Jdownloader2 Settings**: 
    - Disable "Create Subfolder by Packagename" in Packagizer
    - Enable RemoteAPI: Deprecated Api*
